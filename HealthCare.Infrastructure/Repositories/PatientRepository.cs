@@ -6,6 +6,8 @@ using HealthCare.Infrastructure.Data;
 using HealthCare.Application.DTOs;
 using HealthCare.Application.Models;
 using HealthCare.Application.Repositories;
+using HealthCare.Application.Common;
+using HealthCare.Application.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthCare.Infrastructure.Repositories
@@ -28,6 +30,38 @@ namespace HealthCare.Infrastructure.Repositories
 
             var dtos = patients.Select(p => MapToDto(p)).ToList();
             return ResponseModel<IEnumerable<PatientDto>>.Ok(dtos, string.Empty);
+        }
+
+        public async Task<ResponseModel<PagedResult<PatientDto>>> GetPagedAsync(QueryParameters queryParams)
+        {
+            var query = _db.Patients
+                .Include(p => p.PatientAddresses)
+                .Include(p => p.EmergencyContacts)
+                .AsQueryable();
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
+            {
+                query = query.Where(p => 
+                    p.FirstName.Contains(queryParams.SearchTerm) || 
+                    p.LastName.Contains(queryParams.SearchTerm) || 
+                    p.PatientCode.Contains(queryParams.SearchTerm));
+            }
+
+            // Sorting
+            query = query.ApplySorting(queryParams.SortBy, queryParams.IsDescending);
+
+            var totalCount = await query.CountAsync();
+
+            // Pagination
+            var patients = await query
+                .ApplyPagination(queryParams.PageNumber, queryParams.PageSize)
+                .ToListAsync();
+
+            var dtos = patients.Select(p => MapToDto(p)).ToList();
+            var pagedResult = new PagedResult<PatientDto>(dtos, totalCount, queryParams.PageNumber, queryParams.PageSize);
+
+            return ResponseModel<PagedResult<PatientDto>>.Ok(pagedResult);
         }
 
         public async Task<ResponseModel<PatientDto>> GetByIdAsync(int id)

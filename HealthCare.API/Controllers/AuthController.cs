@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using HealthCare.Application.Services;
 using HealthCare.Application.DTOs;
+using Asp.Versioning;
 
 namespace HealthCare.API.Controllers
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/v{version:apiVersion}/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;

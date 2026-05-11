@@ -16,6 +16,21 @@ namespace HealthCare.API.Extensions
 
             services.AddScoped<IPatientRepository, HealthCare.Infrastructure.Repositories.PatientRepository>();
             services.AddScoped<IPatientService, HealthCare.Application.Services.PatientService>();
+            services.AddScoped<IDoctorRepository, DoctorRepository>();
+            services.AddScoped<IDoctorService, DoctorService>();
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
+            services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+            services.AddScoped<IMedicineRepository, MedicineRepository>();
+            services.AddScoped<IPrescriptionService, PrescriptionService>();
+            services.AddScoped<IMedicalRecordRepository, MedicalRecordRepository>();
+            services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+            services.AddScoped<IBillingRepository, BillingRepository>();
+            services.AddScoped<IBillingService, BillingService>();
+            services.AddScoped<IHospitalRepository, HospitalRepository>();
+            services.AddScoped<IHospitalService, HospitalService>();
+            services.AddScoped<ILabRepository, LabRepository>();
+            services.AddScoped<ILabService, LabService>();
             // User service
             services.AddScoped<HealthCare.Application.Services.IUserService, HealthCare.Infrastructure.Services.UserService>();
 

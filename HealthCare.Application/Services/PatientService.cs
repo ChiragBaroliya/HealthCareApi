@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HealthCare.Application.DTOs;
 using HealthCare.Application.Models;
 using HealthCare.Application.Repositories;
+using HealthCare.Application.Common;
 
 namespace HealthCare.Application.Services
 {
@@ -19,6 +20,11 @@ namespace HealthCare.Application.Services
         public async Task<ResponseModel<IEnumerable<PatientDto>>> GetAllAsync()
         {
             return await _repo.GetAllAsync();
+        }
+
+        public async Task<ResponseModel<PagedResult<PatientDto>>> GetPagedAsync(QueryParameters queryParams)
+        {
+            return await _repo.GetPagedAsync(queryParams);
         }
 
         public async Task<ResponseModel<PatientDto>> GetByIdAsync(int id)

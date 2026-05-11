@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using HealthCare.Application.Services;
 using HealthCare.Application.DTOs;
 using HealthCare.Application.Models;
+using HealthCare.Application.Common;
+using Asp.Versioning;
 
 namespace HealthCare.API.Controllers
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/patient")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class PatientsController : ControllerBase
     {
         private readonly IPatientService _service;
@@ -20,6 +23,14 @@ namespace HealthCare.API.Controllers
         public async Task<IActionResult> GetAll()
         {
             var res = await _service.GetAllAsync();
+            if (!res.Success) return BadRequest(res);
+            return Ok(res);
+        }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged([FromQuery] QueryParameters queryParams)
+        {
+            var res = await _service.GetPagedAsync(queryParams);
             if (!res.Success) return BadRequest(res);
             return Ok(res);
         }
