@@ -24,5 +24,13 @@ namespace HealthCare.API.Controllers
             if (!res.Success) return Unauthorized(res);
             return Ok(res);
         }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        {
+            var res = await _userService.RegisterAsync(request);
+            if (!res.Success) return BadRequest(res);
+            return Ok(res);
+        }
     }
 }

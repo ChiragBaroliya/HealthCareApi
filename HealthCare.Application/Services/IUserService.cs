@@ -7,5 +7,6 @@ namespace HealthCare.Application.Services
     public interface IUserService
     {
         Task<ResponseModel<LoginResponseDto>> LoginAsync(LoginRequestDto request);
+        Task<ResponseModel<int>> RegisterAsync(RegisterRequestDto request);
     }
 }

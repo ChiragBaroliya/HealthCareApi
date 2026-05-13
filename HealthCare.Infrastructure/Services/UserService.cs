@@ -59,6 +59,31 @@ namespace HealthCare.Infrastructure.Services
 
             return ResponseModel<LoginResponseDto>.Ok(response);
         }
+        public async Task<ResponseModel<int>> RegisterAsync(RegisterRequestDto request)
+        {
+            if (request.Password != request.ConfirmPassword)
+                return ResponseModel<int>.Fail("Passwords do not match");
+
+            var existingUser = await _db.Users.AnyAsync(u => u.Username == request.Username || u.Email == request.Email);
+            if (existingUser)
+                return ResponseModel<int>.Fail("Username or Email already exists");
+
+            var user = new HealthCare.Domain.Entities.User
+            {
+                Username = request.Username,
+                Email = request.Email,
+                PasswordHash = request.Password, // Demo purposes only, use hashing in production
+                IsActive = true,
+                CreatedAt = System.DateTime.UtcNow,
+                CreatedBy = "System",
+                UpdatedBy = "" // Avoid NULL constraint violation
+            };
+
+            await _db.Users.AddAsync(user);
+            await _db.SaveChangesAsync();
+
+            return ResponseModel<int>.Ok(user.Id, "User registered successfully");
+        }
     }
 }
 
