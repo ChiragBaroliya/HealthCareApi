@@ -10,9 +10,21 @@ namespace HealthCare.API.Extensions
     {
         public static IServiceCollection AddHealthCareServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // Use SQL Server with the DefaultConnection from configuration
+            // Determine database provider
+            var dbProvider = configuration["DatabaseProvider"] ?? "SqlServer";
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
             services.AddDbContext<HealthCareDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            {
+                if (dbProvider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.UseNpgsql(connectionString, x => x.MigrationsAssembly("HealthCare.Infrastructure"));
+                }
+                else
+                {
+                    options.UseSqlServer(connectionString, x => x.MigrationsAssembly("HealthCare.Infrastructure"));
+                }
+            });
 
             services.AddScoped<IPatientRepository, HealthCare.Infrastructure.Repositories.PatientRepository>();
             services.AddScoped<IPatientService, HealthCare.Application.Services.PatientService>();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,6 +11,11 @@ namespace HealthCare.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            if (migrationBuilder.ActiveProvider != "Microsoft.EntityFrameworkCore.SqlServer")
+            {
+                return;
+            }
+
             migrationBuilder.DropForeignKey(
                 name: "FK_Appointments_Doctors_DoctorId",
                 table: "Appointments");
@@ -868,6 +873,11 @@ namespace HealthCare.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            if (migrationBuilder.ActiveProvider != "Microsoft.EntityFrameworkCore.SqlServer")
+            {
+                return;
+            }
+
             migrationBuilder.DropForeignKey(
                 name: "FK_Appointments_Doctors_DoctorId",
                 table: "Appointments");

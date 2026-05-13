@@ -93,8 +93,28 @@ app.UseAuthorization();
 // Automatically apply any pending migrations on startup
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<HealthCare.Infrastructure.Data.HealthCareDbContext>();
-    dbContext.Database.Migrate();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var dbContext = services.GetRequiredService<HealthCare.Infrastructure.Data.HealthCareDbContext>();
+        var pendingMigrations = dbContext.Database.GetPendingMigrations();
+        
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Applying {Count} pending migrations...", pendingMigrations.Count());
+            dbContext.Database.Migrate();
+            logger.LogInformation("Migrations applied successfully.");
+        }
+        else
+        {
+            logger.LogInformation("Database is already up to date. Skipping migration.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
 }
 
 app.MapControllers();

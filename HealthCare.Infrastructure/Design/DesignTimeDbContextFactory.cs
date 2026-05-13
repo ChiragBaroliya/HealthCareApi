@@ -10,12 +10,15 @@ namespace HealthCare.Infrastructure.Design
     {
         public HealthCareDbContext CreateDbContext(string[] args)
         {
+            // Check for provider from environment variable (used by EF tools)
+            var provider = System.Environment.GetEnvironmentVariable("DB_PROVIDER") ?? "SqlServer";
+
             // Attempt to read appsettings.json from API project first, fallback to current directory
             var possiblePaths = new[]
             {
                 Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "HealthCare.API", "appsettings.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "HealthCare.API", "appsettings.json")
+                Path.Combine(Directory.GetCurrentDirectory(), "HealthCare.API", "appsettings.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "HealthCare.API", "appsettings.json")
             };
 
             string connectionString = null;
@@ -27,10 +30,28 @@ namespace HealthCare.Infrastructure.Design
                 {
                     var json = File.ReadAllText(path);
                     using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("ConnectionStrings", out var cs) && cs.TryGetProperty("DefaultConnection", out var def))
+                    
+                    if (doc.RootElement.TryGetProperty("DatabaseProvider", out var dp))
                     {
-                        connectionString = def.GetString();
-                        break;
+                        provider = dp.GetString() ?? provider;
+                    }
+
+                    if (doc.RootElement.TryGetProperty("ConnectionStrings", out var cs))
+                    {
+                        var key = provider.Equals("PostgreSql", System.StringComparison.OrdinalIgnoreCase) 
+                            ? "PostgreSqlConnection" 
+                            : "DefaultConnection";
+                            
+                        if (cs.TryGetProperty(key, out var def))
+                        {
+                            connectionString = def.GetString();
+                            break;
+                        }
+                        else if (cs.TryGetProperty("DefaultConnection", out var def2))
+                        {
+                            connectionString = def2.GetString();
+                            break;
+                        }
                     }
                 }
                 catch
@@ -41,11 +62,21 @@ namespace HealthCare.Infrastructure.Design
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = "Server=(localdb)\\mssqllocaldb;Database=HealthCareDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+                connectionString = provider.Equals("PostgreSql", System.StringComparison.OrdinalIgnoreCase)
+                    ? "Host=localhost;Database=HealthCareDb;Username=postgres;Password=postgres"
+                    : "Server=(localdb)\\mssqllocaldb;Database=HealthCareDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             }
 
             var optionsBuilder = new DbContextOptionsBuilder<HealthCareDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+
+            if (provider.Equals("PostgreSql", System.StringComparison.OrdinalIgnoreCase))
+            {
+                optionsBuilder.UseNpgsql(connectionString, x => x.MigrationsAssembly("HealthCare.Infrastructure"));
+            }
+            else
+            {
+                optionsBuilder.UseSqlServer(connectionString, x => x.MigrationsAssembly("HealthCare.Infrastructure"));
+            }
 
             return new HealthCareDbContext(optionsBuilder.Options);
         }
