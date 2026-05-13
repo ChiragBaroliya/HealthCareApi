@@ -10,6 +10,19 @@ namespace HealthCare.Infrastructure.Design
     {
         public HealthCareDbContext CreateDbContext(string[] args)
         {
+            // Load .env if it exists
+            var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+            if (!File.Exists(envPath))
+            {
+                // Try one more level up if running from within a subfolder
+                envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
+            }
+            
+            if (File.Exists(envPath))
+            {
+                DotNetEnv.Env.Load(envPath);
+            }
+
             // Check for provider from environment variable (used by EF tools)
             var provider = System.Environment.GetEnvironmentVariable("DB_PROVIDER") ?? "SqlServer";
 
@@ -65,6 +78,22 @@ namespace HealthCare.Infrastructure.Design
                 connectionString = provider.Equals("PostgreSql", System.StringComparison.OrdinalIgnoreCase)
                     ? "Host=localhost;Database=HealthCareDb;Username=postgres;Password=postgres"
                     : "Server=(localdb)\\mssqllocaldb;Database=HealthCareDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+            }
+
+            var dbUsername = System.Environment.GetEnvironmentVariable("DB_USERNAME");
+            var dbPassword = System.Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+            if (!string.IsNullOrEmpty(dbUsername) && !string.IsNullOrEmpty(dbPassword))
+            {
+                if (!connectionString.EndsWith(";")) connectionString += ";";
+                if (provider.Equals("PostgreSql", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    connectionString += $"Username={dbUsername};Password={dbPassword};";
+                }
+                else
+                {
+                    connectionString += $"User ID={dbUsername};Password={dbPassword};";
+                }
             }
 
             var optionsBuilder = new DbContextOptionsBuilder<HealthCareDbContext>();

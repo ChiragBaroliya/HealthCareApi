@@ -13,6 +13,22 @@ namespace HealthCare.API.Extensions
             // Determine database provider
             var dbProvider = configuration["DatabaseProvider"] ?? "SqlServer";
             var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var dbUsername = configuration["DB_USERNAME"];
+            var dbPassword = configuration["DB_PASSWORD"];
+
+            if (!string.IsNullOrEmpty(dbUsername) && !string.IsNullOrEmpty(dbPassword))
+            {
+                if (dbProvider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!connectionString.EndsWith(";")) connectionString += ";";
+                    connectionString += $"Username={dbUsername};Password={dbPassword};";
+                }
+                else
+                {
+                    if (!connectionString.EndsWith(";")) connectionString += ";";
+                    connectionString += $"User ID={dbUsername};Password={dbPassword};";
+                }
+            }
 
             services.AddDbContext<HealthCareDbContext>(options =>
             {

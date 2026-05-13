@@ -3,8 +3,23 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Asp.Versioning;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Configuration;
+using Amazon;
+using Kralizek.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+ 
+// Load environment variables for local development
+if (builder.Environment.IsDevelopment())
+{
+    DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+    builder.Configuration.AddEnvironmentVariables();
+}
+else
+{
+    // For production, load from AWS Secrets Manager
+    builder.Configuration.AddSecretsManager(null,region: RegionEndpoint.USEast1);
+}
 
 // Force Kestrel to use HTTP/1.1 to avoid HTTP/2 protocol issues in some dev environments
 builder.WebHost.ConfigureKestrel(options =>
